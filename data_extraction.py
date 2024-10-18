@@ -4,9 +4,9 @@ import pandas as pd
 
 class DataExtractor:
 
-    def __init__(self, dbConnector):
+    def __init__(self):
 
-        self.dbConnector = dbConnector
+        self.dbConnector = database_utils.DatabaseConnector()
         self.engine = self.dbConnector.init_db_engine()
     
     def list_db_tables(self):
@@ -20,11 +20,10 @@ class DataExtractor:
         return data
 
 if __name__ == "__main__":
-    ## Code testing the functionality
-    dbConnector = database_utils.DatabaseConnector()    
-    extractor = DataExtractor(dbConnector)
+    ## Code testing the functionality 
+    extractor = DataExtractor()
 
     tables = extractor.list_db_tables()
     print(tables)
 
-    print(extractor.read_rds_table(tables[3]))
+    print(extractor.read_rds_table("legacy_users"))
