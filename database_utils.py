@@ -5,19 +5,16 @@ import pandas as pd
 class DatabaseConnector:
 
     def read_db_creds(self):
-
         with open("db_creds.yaml", "r") as stream:
             creds = yaml.safe_load(stream)
             return creds
         
     def read_local_creds(self):
-
         with open("local_creds.yaml", "r") as stream:
             creds = yaml.safe_load(stream)
             return creds
 
     def init_db_engine(self):
-        
         creds = self.read_db_creds()
 
         engine = create_engine("postgresql+psycopg2://"
@@ -27,7 +24,6 @@ class DatabaseConnector:
         return engine
     
     def upload_to_db(self, data, table):
-
         creds = self.read_local_creds()
 
         engine = create_engine("postgresql+psycopg2://"

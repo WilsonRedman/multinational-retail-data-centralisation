@@ -1,4 +1,4 @@
-import data_extraction
+import data_extraction, database_utils
 import pandas as pd
 from dateutil.parser import parse
 
@@ -6,6 +6,7 @@ class DataCleaning:
 
     def __init__(self):
         self.extractor = data_extraction.DataExtractor()
+        self.dbConnector = database_utils.DatabaseConnector()
 
     def custom_parse(self, date):
         try:
@@ -14,7 +15,7 @@ class DataCleaning:
             return pd.NaT
     
     def clean_user_data(self):
-        user_data = self.extractor.read_rds_table("legacy_users")
+        user_data = self.extractor.read_rds_table("legacy_users", self.dbConnector)
         user_data.replace("NULL", None, inplace=True)
 
         user_data.join_date = user_data.join_date.apply(self.custom_parse)
@@ -39,8 +40,7 @@ class DataCleaning:
         return card_data
 
 
-
 if __name__ == "__main__":
     ## Code testing the functionality
     cleaner = DataCleaning()
-    print(cleaner.clean_card_data().info())
+    print(cleaner.clean_user_data())
