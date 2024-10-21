@@ -3,3 +3,4 @@ __pycache__/
 db_creds.yaml
 local_creds.yaml
 main.py
+api_keys.py
