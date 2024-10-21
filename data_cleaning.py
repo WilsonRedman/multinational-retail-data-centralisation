@@ -6,7 +6,6 @@ class DataCleaning:
 
     def __init__(self):
         self.extractor = data_extraction.DataExtractor()
-        self.user_data = self.extractor.read_rds_table("legacy_users")
 
     def custom_parse(self, date):
         try:
@@ -15,17 +14,33 @@ class DataCleaning:
             return pd.NaT
     
     def clean_user_data(self):
-        self.user_data.replace("NULL", None, inplace=True)
+        user_data = self.extractor.read_rds_table("legacy_users")
+        user_data.replace("NULL", None, inplace=True)
 
-        self.user_data.join_date = self.user_data.join_date.apply(self.custom_parse)
-        self.user_data.join_date = pd.to_datetime(self.user_data.join_date, infer_datetime_format=True, errors="coerce")
+        user_data.join_date = user_data.join_date.apply(self.custom_parse)
+        user_data.join_date = pd.to_datetime(user_data.join_date, errors="coerce")
 
-        self.user_data.dropna(inplace=True)
+        user_data.dropna(inplace=True)
 
-        return self.user_data
+        return user_data
+    
+    def clean_card_data(self):
+        card_data = self.extractor.retrieve_pdf_data("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf")
+        card_data.replace("Null", None, inplace=True)
+
+        card_data.date_payment_confirmed = card_data.date_payment_confirmed.apply(self.custom_parse)
+        card_data.date_payment_confirmed = pd.to_datetime(card_data.date_payment_confirmed, errors="coerce")
+
+        card_data.card_number = pd.to_numeric(card_data.card_number, errors="coerce")
+        card_data.drop_duplicates(subset=["card_number"], inplace=True, ignore_index=True)
+
+        card_data.dropna(inplace=True)
+
+        return card_data
+
 
 
 if __name__ == "__main__":
     ## Code testing the functionality
     cleaner = DataCleaning()
-    print(cleaner.clean_user_data())
+    print(cleaner.clean_card_data().info())
