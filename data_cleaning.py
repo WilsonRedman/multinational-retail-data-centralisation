@@ -1,6 +1,7 @@
 import data_extraction, database_utils, api_keys
 import pandas as pd
 from dateutil.parser import parse
+import re
 
 class DataCleaning:
 
@@ -57,9 +58,51 @@ class DataCleaning:
         store_data.dropna(inplace=True)
         
         return store_data
+    
+    def convert_product_weights(self, weight):
+        weight = re.sub(r"[^\w]", "", weight)
+
+        try:
+            multiplier = 1
+            if "kg" in weight:
+                value = weight[:-2]
+            elif "ml" in weight:
+                value = weight[:-2]
+                multiplier = 1/1000
+            elif "g" in weight:
+                value = weight[:-1]
+                multiplier = 1/1000
+            elif "oz" in weight:
+                value = weight[:-2]
+                multiplier = 0.0283495
+            
+            if "x" in value:
+                newVal = 1.0
+                for multiple in value.split("x"):
+                    newVal *= float(multiple)
+                return newVal * multiplier
+            else:
+                return float(value) * multiplier
+        
+        except:
+            return pd.NA
+        
+    def clean_products_data(self):
+        link = "s3://data-handling-public/products.csv"
+        products_data = self.extractor.extract_from_s3(link)
+
+        products_data.replace("Null", None, inplace=True)
+        products_data.dropna(inplace=True)
+
+        products_data.weight = products_data.weight.apply(self.convert_product_weights)
+        products_data.weight = pd.to_numeric(products_data.weight)
+
+        products_data.dropna(inplace=True)
+
+        return products_data
 
 
 if __name__ == "__main__":
     ## Code testing the functionality
     cleaner = DataCleaning()
-    print(cleaner.clean_store_data())
+    print(cleaner.clean_products_data())

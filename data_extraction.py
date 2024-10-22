@@ -46,7 +46,7 @@ class DataExtractor:
         file = link[5:].split("/", 1)[1]
 
         csv = s3.get_object(Bucket = bucket, Key = file)
-        df = pd.read_csv(csv["Body"])
+        df = pd.read_csv(csv["Body"], index_col=0)
         
         return df
 
