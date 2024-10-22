@@ -1,4 +1,4 @@
-import data_extraction, database_utils
+import data_extraction, database_utils, api_keys
 import pandas as pd
 from dateutil.parser import parse
 
@@ -38,9 +38,28 @@ class DataCleaning:
         card_data.dropna(inplace=True)
 
         return card_data
+    
+    def clean_store_data(self):
+        url = "https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/number_stores"
+        response = self.extractor.list_number_of_stores(url, api_keys.storeHeader)
+
+        url = "https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/store_details/"
+        store_data = self.extractor.retrieve_stores_data(url, api_keys.storeHeader, response)
+        store_data.drop(["lat"], axis=1, inplace=True)
+
+        store_data.replace("Null", None, inplace=True)
+
+        store_data.opening_date = store_data.opening_date.apply(self.custom_parse)
+        store_data.opening_date = pd.to_datetime(store_data.opening_date, errors="coerce")
+
+        store_data.staff_numbers = store_data.staff_numbers.str.replace(r"[^\d]", "", regex=True)
+        
+        store_data.dropna(inplace=True)
+        
+        return store_data
 
 
 if __name__ == "__main__":
     ## Code testing the functionality
     cleaner = DataCleaning()
-    print(cleaner.clean_user_data())
+    print(cleaner.clean_store_data())
