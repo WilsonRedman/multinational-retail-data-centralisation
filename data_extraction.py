@@ -1,8 +1,7 @@
 import database_utils, api_keys
 from sqlalchemy import inspect, text
 import pandas as pd
-import tabula
-import requests
+import tabula, requests, boto3
 
 class DataExtractor:
     
@@ -40,6 +39,16 @@ class DataExtractor:
             stores = pd.concat([stores, df])
 
         return stores
+    
+    def extract_from_s3(self, link):
+        s3 = boto3.client("s3")
+        bucket = link[5:].split("/", 1)[0]
+        file = link[5:].split("/", 1)[1]
+
+        csv = s3.get_object(Bucket = bucket, Key = file)
+        df = pd.read_csv(csv["Body"])
+        
+        return df
 
 
 if __name__ == "__main__":
@@ -47,9 +56,5 @@ if __name__ == "__main__":
     dbConnector = database_utils.DatabaseConnector()
     extractor = DataExtractor()
 
-    url = "https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/number_stores"
-    response = extractor.list_number_of_stores(url, api_keys.storeHeader)
-
-    url = "https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/store_details/"
-    response = extractor.retrieve_stores_data(url, api_keys.storeHeader, response)
-    print(response)
+    url = "s3://data-handling-public/products.csv"
+    print(extractor.extract_from_s3(url))
