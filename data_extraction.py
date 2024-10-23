@@ -56,5 +56,4 @@ if __name__ == "__main__":
     dbConnector = database_utils.DatabaseConnector()
     extractor = DataExtractor()
 
-    url = "s3://data-handling-public/products.csv"
-    print(extractor.extract_from_s3(url))
+    print(extractor.list_db_tables(dbConnector))

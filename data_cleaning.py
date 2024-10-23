@@ -22,6 +22,8 @@ class DataCleaning:
         user_data.join_date = user_data.join_date.apply(self.custom_parse)
         user_data.join_date = pd.to_datetime(user_data.join_date, errors="coerce")
 
+        user_data.drop(["level_0"], inplace=True)
+
         user_data.dropna(inplace=True)
 
         return user_data
@@ -54,6 +56,8 @@ class DataCleaning:
         store_data.opening_date = pd.to_datetime(store_data.opening_date, errors="coerce")
 
         store_data.staff_numbers = store_data.staff_numbers.str.replace(r"[^\d]", "", regex=True)
+
+        store_data.drop(["level_0"], inplace=True)
         
         store_data.dropna(inplace=True)
         
@@ -97,12 +101,21 @@ class DataCleaning:
         products_data.weight = products_data.weight.apply(self.convert_product_weights)
         products_data.weight = pd.to_numeric(products_data.weight)
 
+        products_data.drop(["index"], inplace=True)
+
         products_data.dropna(inplace=True)
 
         return products_data
+    
+    def clean_orders_data(self):
+        orders_data = self.extractor.read_rds_table("orders_table", self.dbConnector)
+
+        orders_data.drop(["index", "level_0", "first_name", "last_name", "1"], axis=1, inplace=True)
+        
+        return orders_data
 
 
 if __name__ == "__main__":
     ## Code testing the functionality
     cleaner = DataCleaning()
-    print(cleaner.clean_products_data())
+    print(cleaner.clean_orders_data())
