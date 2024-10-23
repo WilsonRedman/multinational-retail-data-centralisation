@@ -40,14 +40,18 @@ class DataExtractor:
 
         return stores
     
-    def extract_from_s3(self, link):
+    def extract_from_s3(self, url):
         s3 = boto3.client("s3")
-        bucket = link[5:].split("/", 1)[0]
-        file = link[5:].split("/", 1)[1]
+        bucket = url[5:].split("/", 1)[0]
+        file = url[5:].split("/", 1)[1]
 
         csv = s3.get_object(Bucket = bucket, Key = file)
         df = pd.read_csv(csv["Body"], index_col=0)
         
+        return df
+    
+    def extract_json(self, url):
+        df = pd.read_json(url)
         return df
 
 
@@ -56,4 +60,6 @@ if __name__ == "__main__":
     dbConnector = database_utils.DatabaseConnector()
     extractor = DataExtractor()
 
-    print(extractor.list_db_tables(dbConnector))
+    url = "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json"
+
+    print(extractor.extract_json(url))
