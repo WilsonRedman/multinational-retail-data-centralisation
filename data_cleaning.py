@@ -113,9 +113,21 @@ class DataCleaning:
         orders_data.drop(["index", "level_0", "first_name", "last_name", "1"], axis=1, inplace=True)
         
         return orders_data
+    
+    def clean_date_data(self):
+        url = "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json"
+        date_data = self.extractor.extract_json(url)
 
+        date_data.replace("Null", None, inplace=True)
+        date_data[["month", "day", "year"]] = date_data[["month", "day", "year"]].apply(pd.to_numeric, errors="coerce")
+
+        date_data.dropna(inplace=True)
+
+        date_data[["month", "day", "year"]] = date_data[["month", "day", "year"]].astype(int)
+
+        return date_data
 
 if __name__ == "__main__":
     ## Code testing the functionality
     cleaner = DataCleaning()
-    print(cleaner.clean_orders_data())
+    print(cleaner.clean_date_data())
