@@ -1,17 +1,7 @@
 from dateutil.parser import parse
-import data_extraction, database_utils, api_keys
 import re, pandas as pd
 
 class DataCleaning:
-
-    def __init__(self):
-        '''
-        Constructor for the DataCleaning class, creates instances for connecting to a database
-        and extracting data, both needed when extracting data from a database.
-        '''
-
-        self.extractor = data_extraction.DataExtractor()
-        self.dbConnector = database_utils.DatabaseConnector()
 
     def custom_parse(self, date):
         '''
@@ -28,15 +18,17 @@ class DataCleaning:
         except:
             return pd.NaT
     
-    def clean_user_data(self):
+    def clean_user_data(self, user_data):
         '''
-        Cleans user data from a "legacy_users" table in the connected DatabaseConnector instance
+        Cleans user data
+
+        Args:
+            user_data (DataFrame)
 
         Returns:
             DataFrame
         '''
 
-        user_data = self.extractor.read_rds_table("legacy_users", self.dbConnector)
         user_data.replace("NULL", pd.NA, inplace=True)
 
         user_data.join_date = user_data.join_date.apply(self.custom_parse)
@@ -50,19 +42,23 @@ class DataCleaning:
     
     def integer_pass(self, card_number):
         try:
-            return int(card_number)
+            int(card_number)
+            return card_number
         except:
-            return pd.NA
+            card_number = re.sub(r"\D+", "", card_number)
+            return card_number
     
-    def clean_card_data(self):
+    def clean_card_data(self, card_data):
         '''
         Cleans card data from a pdf
+
+        Args:
+            card_data (DataFrame)
 
         Returns:
             DataFrame
         '''
 
-        card_data = self.extractor.retrieve_pdf_data("https://data-handling-public.s3.eu-west-1.amazonaws.com/card_details.pdf")
         card_data.replace("Null", pd.NA, inplace=True)
 
         card_data.drop_duplicates(subset=["card_number"], inplace=True)
@@ -72,24 +68,22 @@ class DataCleaning:
         card_data.date_payment_confirmed = card_data.date_payment_confirmed.apply(self.custom_parse)
         card_data.date_payment_confirmed = pd.to_datetime(card_data.date_payment_confirmed, errors="coerce")
 
-        card_data.dropna(inplace=True, ignore_index=True)
+        card_data.dropna(subset = ["card_number","date_payment_confirmed"], inplace=True, ignore_index=True)
 
         return card_data
     
-    def clean_store_data(self):
+    def clean_store_data(self, store_data):
         '''
-        Cleans store data retrieved from APIs
+        Cleans store data
+
+        Args:
+            store_data (DataFrame)
 
         Returns:
             DataFrame
         '''
 
-        url = "https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/number_stores"
-        response = self.extractor.list_number_of_stores(url, api_keys.storeHeader)
-
-        url = "https://aqj7u5id95.execute-api.eu-west-1.amazonaws.com/prod/store_details/"
-        store_data = self.extractor.retrieve_stores_data(url, api_keys.storeHeader, response)
-        store_data.drop(["index", "lat"], axis=1, inplace=True)
+        store_data.drop(["index"], axis=1, inplace=True)
 
         store_data.replace("Null", pd.NA, inplace=True)
 
@@ -98,7 +92,7 @@ class DataCleaning:
 
         store_data.staff_numbers = store_data.staff_numbers.str.replace(r"[^\d]", "", regex=True)
         
-        store_data.dropna(inplace=True, ignore_index=True)
+        store_data.dropna(subset = ["store_code", "opening_date", "country_code"],inplace=True, ignore_index=True)
         
         return store_data
     
@@ -140,16 +134,16 @@ class DataCleaning:
         except:
             return pd.NA
         
-    def clean_products_data(self):
+    def clean_products_data(self, products_data):
         '''
-        Cleans product data retrieved from a csv file in an s3 bucket
+        Cleans product data
+
+        Args:
+            products_data (DataFrame)
 
         Returns:
             DataFrame
         '''
-
-        link = "s3://data-handling-public/products.csv"
-        products_data = self.extractor.extract_from_s3(link)
 
         products_data.replace("Null", pd.NA, inplace=True)
         products_data.dropna(inplace=True)
@@ -161,30 +155,31 @@ class DataCleaning:
 
         return products_data
     
-    def clean_orders_data(self):
+    def clean_orders_data(self, orders_data):
         '''
-        Cleans user data from a "orders_table" table in the connected DatabaseConnector instance
+        Cleans order data
+
+        Args:
+            orders_data (DataFrame)
 
         Returns:
             DataFrame
         '''
-
-        orders_data = self.extractor.read_rds_table("orders_table", self.dbConnector)
 
         orders_data.drop(["level_0", "index", "first_name", "last_name", "1"], axis=1, inplace=True)
         
         return orders_data
     
-    def clean_date_data(self):
+    def clean_date_data(self, date_data):
         '''
-        Cleans date data from a json file
+        Cleans date data
+
+        Args:
+            date_data (DataFrame)
 
         Returns:
             DataFrame
         '''
-
-        url = "https://data-handling-public.s3.eu-west-1.amazonaws.com/date_details.json"
-        date_data = self.extractor.extract_json(url)
 
         date_data.replace("Null", pd.NA, inplace=True)
         date_data[["month", "day", "year"]] = date_data[["month", "day", "year"]].apply(pd.to_numeric, errors="coerce")
@@ -198,4 +193,4 @@ class DataCleaning:
 if __name__ == "__main__":
     ## Code testing the functionality
     cleaner = DataCleaning()
-    print(cleaner.clean_orders_data())
+    print(cleaner.clean_card_data())

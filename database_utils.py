@@ -46,6 +46,7 @@ class DatabaseConnector:
 
         engine = create_engine("postgresql+psycopg2://"
                                 f"{creds["RDS_USER"]}:{creds["RDS_PASSWORD"]}@"
-                                f"{creds["RDS_HOST"]}:{creds["RDS_PORT"]}/{creds["RDS_DATABASE"]}", echo=True)
+                                f"{creds["RDS_HOST"]}:{creds["RDS_PORT"]}/{creds["RDS_DATABASE"]}")
+        
         
         data.to_sql(table, engine, if_exists = "replace")

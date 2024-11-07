@@ -16,4 +16,8 @@ This project requires libraries `sqlalchemy`, `pandas`, `tabula`, `boto3`, `requ
 
 `data_extraction.py` handles extracting data from different sources, mentioned in the introduction. The data from each of these methods is returned as dataframes that need cleaning.
 
-`data_cleaning.py` handles the cleaning of specific pieces of data. These methods aren't created to be reused in different scenarios as they reference specific pieces of data and perform cleaning that's tailored to that data.
+`data_cleaning.py` handles the cleaning of specific pieces of data. These methods aren't created to be reused in different scenarios as they perform cleaning that's tailored to that data.
+
+`schema.sql` contains some of the commands that were used to alter data types, add constraints, and new columns to data in the database.
+
+`queries.sql` contains some of the queries that were used to view and manipulate the data, with descriptions of what each one is doing
