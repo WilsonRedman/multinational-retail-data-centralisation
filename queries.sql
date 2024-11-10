@@ -98,30 +98,25 @@ GROUP BY dim_store_details.store_type, dim_store_details.country_code
 
 -- Viewing average time between sales across years
 WITH whole_timestamp AS(
-    SELECT
-        year,
-        month,
-        day,
-        timestamp,
-        TO_TIMESTAMP(year||'-'||month||'-'||day||' '||timestamp, 'YYYY-MM-DD HH24:MI:SS') AS whole_timestamp
-    FROM dim_date_times
+	SELECT
+	year,
+	TO_TIMESTAMP(year||'-'||month||'-'||day||' '||timestamp, 'YYYY-MM-DD HH24:MI:SS')::timestamp AS time
+	FROM dim_date_times
 ),
-
 time_diffs AS(
-    SELECT 
-        year,
-        EXTRACT(EPOCH FROM LEAD(whole_timestamp) OVER (ORDER BY year, month, day, timestamp) - whole_timestamp) AS time_diff
-    FROM whole_timestamp
+	SELECT
+	year,
+	EXTRACT(EPOCH FROM(LEAD(time) OVER(ORDER BY year, time) - time)) AS time_diff
+	FROM whole_timestamp
 )
-
-SELECT 
-    year,
-    CONCAT(
-        'hours: ', FLOOR(AVG(time_diff) / 3600), 
-        ', minutes: ', FLOOR(AVG(time_diff) % 3600 / 60), 
-        ', seconds: ', FLOOR(AVG(time_diff) % 60),
-        ', milliseconds: ', ROUND((AVG(time_diff) % 1) * 1000)
-    ) AS actual_time_taken
+SELECT
+	year,
+	CONCAT(
+		'hours: ', FLOOR(AVG(time_diff)/3600),
+		', minutes: ', FLOOR((AVG(time_diff)%3600)/60),
+		', seconds: ', FLOOR((AVG(time_diff)%60)),
+		', miliseconds ', FLOOR((AVG(time_diff)%1)*1000)
+	)
 FROM time_diffs
 GROUP BY year
 ORDER BY AVG(time_diff) DESC
